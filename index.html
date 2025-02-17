@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dungeon Scroll (Final Adjustments)</title>
+  <style>
+    /* Approximate color palette from your mock (adjust as needed) */
+    :root {
+      --bg-color: #2f2f2f;            /* overall background */
+      --image-border-color: #666666;  /* lighter gray border on image */
+      --player-square-color: #6CAB4F; /* center bright green */
+      --adjacent-square-color: #5B8D48;  
+      --diag-square-color: #666666;   /* near squares */
+      --other-square-color: #3A3A3A;  /* dark gray */
+      --icon-offwhite: #e0e0e0;       /* off-white for icons */
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      background: var(--bg-color);
+      font-family: Arial, sans-serif;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      /* scroll if needed */
+      overflow: auto;
+    }
+
+    /* ----------------- PAGE CONTENT WRAPPER ----------------- */
+    .page-content {
+      width: 100%;
+      max-width: 450px;
+      margin-top: 30px;
+      margin-left: auto;
+      margin-right: auto;
+      padding: 0 30px; /* extra left/right padding for a narrower look */
+      box-sizing: border-box;
+    }
+
+    /* ----------------- IMAGE CONTAINER ----------------- */
+    #image-container {
+      position: relative;
+      width: 100%;
+      height: 400px;  /* taller rectangle */
+      overflow: hidden;
+
+      /* Light greyish border with top corners rounded */
+      border: 2px solid var(--image-border-color);
+      border-bottom: none; /* no bottom border */
+      border-top-left-radius: 15px;
+      border-top-right-radius: 15px;
+    }
+
+    /* The two background layers for cross-fades */
+    .image-layer {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-size: cover;
+      background-position: center;
+      opacity: 0;
+      transition: opacity 0.5s ease-in-out;
+    }
+    .image-layer.active {
+      opacity: 1;
+    }
+
+    /*
+      Fade-out overlay that ALSO covers the bottom border,
+      starting higher (e.g. 60%) so it fades out more of the image/border.
+    */
+    #image-fade-out {
+        position: absolute;
+        z-index: 10;
+        /* Shift it up/left by 5px and increase size by 10px total (5px per side) */
+        bottom: -5px;
+        left: -5px;
+        width: calc(100% + 10px);
+        height: 60%; /* or any desired fade height; you can adjust this further */
+        pointer-events: none;
+        background: linear-gradient(
+            to bottom,
+            rgba(47, 47, 47, 0) 0%,
+            var(--bg-color) 100%
+        );
+    }
+
+    /* ----------------- MENU WITH 3 ICONS ----------------- */
+    #menu-container {
+      position: absolute;
+      bottom: 20px;  /* more space from bottom */
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      gap: 40px; /* larger gap between icons */
+    }
+    /* A wrapper around each icon to provide a translucent square background */
+    .icon-wrapper {
+        background: rgba(0, 0, 0, 0.8); /* semi-transparent black */
+        border-radius: 8px;            /* rounded corners */
+        padding: 10px;
+        display: inline-flex;          /* or flex if you prefer */
+        align-items: center;
+        justify-content: center;
+    }
+    /* The icons themselves: bigger size & off-white color hint
+       (works well if these are SVG or icon fonts; if PNG, the color property won't apply) */
+    .menu-icon {
+      width: 50px;
+      height: 50px;
+      cursor: pointer;
+      filter: brightness(0) invert(1); 
+      /* ^ If they are monochrome PNG icons, this trick can make them appear white(ish).
+         Otherwise, replace with actual off-white assets or use inline SVG with fill. */
+    }
+
+    /* ----------------- TEXT FIELD ----------------- */
+    #dynamic-text {
+      margin: 15px 0;
+      text-align: center;
+      font-size: 1.2Sem;
+    }
+
+    /* ----------------- GRID SECTION ----------------- */
+    #grid-container {
+      width: 100%;
+      max-width: 450px;
+      position: relative;
+      margin-bottom: 50px; 
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      grid-template-rows: repeat(5, 1fr);
+      gap: 0; /* squares touching */
+      width: 100%;
+      aspect-ratio: 1;
+      position: relative;
+      margin: 0 auto;
+      border: none; /* remove any outline around the entire grid */
+    }
+
+    /* We'll show only internal lines between cells, not the outer boundary */
+    .grid-cell {
+      border-right: 1px solid black;
+      border-bottom: 1px solid black;
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+    }
+    /* Remove right border for last column */
+    .grid-cell:nth-child(5n) {
+      border-right: none;
+    }
+    /* Remove bottom border for last row (cells 21-25 in a 25-cell grid) */
+    .grid-cell:nth-child(n+21) {
+      border-bottom: none;
+    }
+
+    /* Invalid move => brief red flash */
+    .grid-cell.invalid-move {
+      animation: flash-red 0.3s;
+    }
+    @keyframes flash-red {
+      0%   { background-color: red; }
+      100% { background-color: inherit; }
+    }
+
+    /* ----------------- CIRCLE OVERLAY ----------------- */
+    #circle-mask {
+        position: absolute;
+        top: -5px;
+        left: -5px;
+        width: calc(100% + 10px);
+        height: calc(100% + 10px);
+        pointer-events: none;
+        background: radial-gradient(
+            circle at 50% 50%,
+            rgba(47,47,47,0) 55%,
+            var(--bg-color) 60%,
+            var(--bg-color) 100%
+        );
+    }
+
+    /* ----------------- MINI-MAP PLACEHOLDER ----------------- */
+    #mini-map {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 80px;
+      height: 80px;
+      margin: 20px;
+      border: 3px solid #888;
+      border-radius: 50%;
+      background: #111; 
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-content">
+    <!-- TOP IMAGE CONTAINER -->
+    <div id="image-container">
+      <div class="image-layer" id="image-layer-1"></div>
+      <div class="image-layer" id="image-layer-2"></div>
+
+      <!-- Fade-out overlay that covers image & bottom border -->
+      <div id="image-fade-out"></div>
+
+      <!-- 3 Icon Menu Overlay -->
+      <div id="menu-container">
+        <div class="icon-wrapper">
+          <img src="./assets/icons/build.png" alt="icon1" class="menu-icon" />
+        </div>
+        <div class="icon-wrapper">
+          <img src="./assets/icons/view.png" alt="icon2" class="menu-icon" />
+        </div>
+        <div class="icon-wrapper">
+          <img src="./assets/icons/gather.png" alt="icon3" class="menu-icon" />
+        </div>
+      </div>
+    </div>
+
+    <!-- TEXT FIELD -->
+    <div id="dynamic-text">you salvage copper from loose wires</div>
+
+    <!-- GRID CONTAINER -->
+    <div id="grid-container">
+      <div class="grid" id="grid"></div>
+      <!-- Circular gradient overlay -->
+      <div id="circle-mask"></div>
+      <!-- Mini-map placeholder -->
+      <div id="mini-map"></div>
+    </div>
+  </div>
+
+  <script>
+    class GridGame {
+      constructor() {
+        this.rows = 5;
+        this.cols = 5;
+        this.current = [0, 0]; // Starting position
+        this.dungeonMap = this.generateDungeon();
+
+        // For cross-fade image switching
+        this.currentLayer = 1;
+
+        this.initGrid();
+        this.preloadImages();
+        this.setInitialImage();
+      }
+
+      generateDungeon() {
+        const cellTypes = ['corridor','treasure','monster','boss','locked_door','empty'];
+        const map = [];
+        for (let i = 0; i < this.rows; i++) {
+          const row = [];
+          for (let j = 0; j < this.cols; j++) {
+            const rIndex = Math.floor(Math.random() * cellTypes.length);
+            row.push({ type: cellTypes[rIndex] });
+          }
+          map.push(row);
+        }
+        // Make bottom-right guaranteed 'boss'
+        map[4][4] = { type: 'boss' };
+        return map;
+      }
+
+      preloadImages() {
+        const imageTypes = ['corridor','treasure','monster','boss','locked_door','empty'];
+        imageTypes.forEach(type => {
+          const img = new Image();
+          img.src = this.getImageUrl(type);
+        });
+      }
+
+      getImageUrl(type) {
+        const imageMap = {
+          corridor: 'assets/corridor.jpg',
+          treasure: 'assets/treasure.jpg',
+          monster: 'assets/monster.jpg',
+          boss: 'assets/boss.jpg',
+          locked_door: 'assets/locked_door.jpg',
+          empty: 'assets/empty.jpg'
+        };
+        return `${imageMap[type]}?v=${Date.now()}`; // cache-buster
+      }
+
+      setInitialImage() {
+        const cellType = this.dungeonMap[this.current[0]][this.current[1]].type;
+        const layer1 = document.getElementById('image-layer-1');
+        layer1.style.backgroundImage = `url('${this.getImageUrl(cellType)}')`;
+        layer1.classList.add('active');
+      }
+
+      updateImage(newRow, newCol) {
+        const newLayer = this.currentLayer === 1 ? 2 : 1;
+        const currentLayerEl = document.getElementById(`image-layer-${this.currentLayer}`);
+        const nextLayerEl = document.getElementById(`image-layer-${newLayer}`);
+
+        const newCellType = this.dungeonMap[newRow][newCol].type;
+        nextLayerEl.style.backgroundImage = `url('${this.getImageUrl(newCellType)}')`;
+
+        // Cross-fade
+        currentLayerEl.classList.remove('active');
+        nextLayerEl.classList.add('active');
+        this.currentLayer = newLayer;
+      }
+
+      initGrid() {
+        const gridEl = document.getElementById('grid');
+        gridEl.innerHTML = '';
+
+        for (let r = 0; r < this.rows; r++) {
+          for (let c = 0; c < this.cols; c++) {
+            const cell = document.createElement('div');
+            cell.classList.add('grid-cell');
+            cell.style.backgroundColor = this.getCellColor(r, c);
+
+            cell.addEventListener('click', () => {
+              this.attemptMove(r, c, cell);
+            });
+
+            gridEl.appendChild(cell);
+          }
+        }
+      }
+
+      attemptMove(row, col, cellEl) {
+        const rowDist = Math.abs(row - this.current[0]);
+        const colDist = Math.abs(col - this.current[1]);
+
+        // Valid if exactly 1 step up/down/left/right
+        if ((rowDist === 1 && colDist === 0) || (rowDist === 0 && colDist === 1)) {
+          this.current = [row, col];
+          this.updateImage(row, col);
+          this.initGrid();
+        } else {
+          // Invalid => flash the cell red
+          cellEl.classList.add('invalid-move');
+          setTimeout(() => {
+            cellEl.classList.remove('invalid-move');
+          }, 300);
+        }
+      }
+
+      getCellColor(r, c) {
+        const currentR = this.current[0];
+        const currentC = this.current[1];
+        const rowDist = Math.abs(r - currentR);
+        const colDist = Math.abs(c - currentC);
+
+        // Current square => bright green
+        if (rowDist === 0 && colDist === 0) {
+          return 'var(--player-square-color)';
+        }
+        // Valid moves => slightly darker green
+        if ((rowDist === 1 && colDist === 0) || (rowDist === 0 && colDist === 1)) {
+          return 'var(--adjacent-square-color)';
+        }
+        // Diagonal or 2-away => light gray
+        if (
+          (rowDist === 1 && colDist === 1) ||
+          (rowDist === 2 && colDist === 0) ||
+          (rowDist === 0 && colDist === 2)
+        ) {
+          return 'var(--diag-square-color)';
+        }
+        // Everything else => dark gray
+        return 'var(--other-square-color)';
+      }
+    }
+
+    // Instantiate game
+    new GridGame();
+  </script>
+</body>
+</html>
