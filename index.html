@@ -1,61 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dungeon Scroll (Final Adjustments)</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Dungeon Scroll - 16 Unique CRUX_ENV Images</title>
   <style>
-    /* Approximate color palette from your mock (adjust as needed) */
     :root {
-      --bg-color: #2f2f2f;            /* overall background */
-      --image-border-color: #666666;  /* lighter gray border on image */
-      --player-square-color: #6CAB4F; /* center bright green */
-      --adjacent-square-color: #5B8D48;  
-      --diag-square-color: #666666;   /* near squares */
-      --other-square-color: #3A3A3A;  /* dark gray */
-      --icon-offwhite: #e0e0e0;       /* off-white for icons */
+      --bg-color: #2f2f2f;
+      --image-border-color: #666666;
+      --player-square-color: #6CAB4F;   /* bright green for current tile */
+      --dark-grey: #3A3A3A;            /* undiscovered squares */
+      --whiteish: #ccc;                /* visited squares */
+      --greyish-green: #5f7b5f;        /* adjacent & undiscovered */
+      --whiteish-green: #b0c0b0;       /* adjacent & visited */
     }
 
     body {
-      margin: 0;
+      margin: 0; 
       padding: 0;
-      min-height: 100vh;
       background: var(--bg-color);
-      font-family: Arial, sans-serif;
       color: #fff;
+      font-family: Arial, sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
-      /* scroll if needed */
       overflow: auto;
     }
 
-    /* ----------------- PAGE CONTENT WRAPPER ----------------- */
     .page-content {
       width: 100%;
-      max-width: 450px;
+      max-width: 600px;
       margin-top: 30px;
       margin-left: auto;
       margin-right: auto;
-      padding: 0 30px; /* extra left/right padding for a narrower look */
+      padding: 0 20px;
       box-sizing: border-box;
     }
 
-    /* ----------------- IMAGE CONTAINER ----------------- */
+    /* =================== TOP IMAGE CONTAINER =================== */
     #image-container {
       position: relative;
       width: 100%;
-      height: 400px;  /* taller rectangle */
+      height: 400px;
       overflow: hidden;
-
-      /* Light greyish border with top corners rounded */
       border: 2px solid var(--image-border-color);
-      border-bottom: none; /* no bottom border */
+      border-bottom: none;
       border-top-left-radius: 15px;
       border-top-right-radius: 15px;
+      margin-bottom: 10px;
     }
-
-    /* The two background layers for cross-fades */
     .image-layer {
       position: absolute;
       top: 0; left: 0;
@@ -63,158 +56,248 @@
       background-size: cover;
       background-position: center;
       opacity: 0;
-      transition: opacity 0.5s ease-in-out;
     }
-    .image-layer.active {
-      opacity: 1;
+    /* 3s directional fade (1.5 + 1.5) */
+    #black-overlay {
+      position: absolute;
+      top: 0; 
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: black;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 999;
     }
-
-    /*
-      Fade-out overlay that ALSO covers the bottom border,
-      starting higher (e.g. 60%) so it fades out more of the image/border.
-    */
+    /* optional bottom fade-out gradient */
     #image-fade-out {
-        position: absolute;
-        z-index: 10;
-        /* Shift it up/left by 5px and increase size by 10px total (5px per side) */
-        bottom: -5px;
-        left: -5px;
-        width: calc(100% + 10px);
-        height: 60%; /* or any desired fade height; you can adjust this further */
-        pointer-events: none;
-        background: linear-gradient(
-            to bottom,
-            rgba(47, 47, 47, 0) 0%,
-            var(--bg-color) 100%
-        );
+      position: absolute;
+      z-index: 10;
+      bottom: 0; 
+      left: 0;
+      width: 100%;
+      height: 40%;
+      pointer-events: none;
+      background: linear-gradient(
+        to bottom,
+        rgba(47,47,47,0) 0%,
+        var(--bg-color) 100%
+      );
     }
 
-    /* ----------------- MENU WITH 3 ICONS ----------------- */
+    /* 3 ICONS MENU AT BOTTOM OF TOP IMAGE */
     #menu-container {
       position: absolute;
-      bottom: 20px;  /* more space from bottom */
+      bottom: 20px;
       width: 100%;
       display: flex;
       justify-content: center;
-      gap: 40px; /* larger gap between icons */
+      gap: 40px;
     }
-    /* A wrapper around each icon to provide a translucent square background */
     .icon-wrapper {
-        background: rgba(0, 0, 0, 0.8); /* semi-transparent black */
-        border-radius: 8px;            /* rounded corners */
-        padding: 10px;
-        display: inline-flex;          /* or flex if you prefer */
-        align-items: center;
-        justify-content: center;
+      background: rgba(0,0,0,0.8);
+      border-radius: 8px;
+      padding: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
-    /* The icons themselves: bigger size & off-white color hint
-       (works well if these are SVG or icon fonts; if PNG, the color property won't apply) */
     .menu-icon {
-      width: 50px;
+      width: 50px; 
       height: 50px;
       cursor: pointer;
-      filter: brightness(0) invert(1); 
-      /* ^ If they are monochrome PNG icons, this trick can make them appear white(ish).
-         Otherwise, replace with actual off-white assets or use inline SVG with fill. */
+      filter: brightness(0) invert(1);
     }
 
-    /* ----------------- TEXT FIELD ----------------- */
+    /* TEXT BELOW IMAGE */
     #dynamic-text {
       margin: 15px 0;
       text-align: center;
-      font-size: 1.2Sem;
+      font-size: 1.2em;
     }
 
-    /* ----------------- GRID SECTION ----------------- */
+    /* MAIN GRID CONTAINER */
     #grid-container {
-      width: 100%;
-      max-width: 450px;
       position: relative;
-      margin-bottom: 50px; 
+      max-width: 600px;
+      margin-bottom: 50px;
     }
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      grid-template-rows: repeat(5, 1fr);
-      gap: 0; /* squares touching */
-      width: 100%;
-      aspect-ratio: 1;
+    /* 5×5 VIEWPORT (400×400), persistent DOM cells */
+    .viewport-wrapper {
       position: relative;
+      width: 400px;
+      height: 400px;
       margin: 0 auto;
-      border: none; /* remove any outline around the entire grid */
+      overflow: hidden;
     }
-
-    /* We'll show only internal lines between cells, not the outer boundary */
-    .grid-cell {
-      border-right: 1px solid black;
-      border-bottom: 1px solid black;
-      transition: background 0.2s;
+    #viewport-grid {
+      position: absolute;
+      top: 0; left: 0;
+      width: 400px; 
+      height: 400px;
+      display: grid;
+      grid-template-columns: repeat(5, 80px);
+      grid-template-rows: repeat(5, 80px);
+      transition: transform 1.5s ease; /* slower camera pan */
+    }
+    .viewport-cell {
+      box-sizing: border-box;
+      width: 80px;
+      height: 80px;
+      border: 1px solid #222;
+      /* fade color changes */
+      transition: background-color 1s; 
       display: flex;
       align-items: center;
       justify-content: center;
       user-select: none;
+      position: relative;
     }
-    /* Remove right border for last column */
-    .grid-cell:nth-child(5n) {
-      border-right: none;
+    /* 0.5s highlight on valid click */
+    .click-highlight {
+      animation: clickFlash 0.5s forwards;
     }
-    /* Remove bottom border for last row (cells 21-25 in a 25-cell grid) */
-    .grid-cell:nth-child(n+21) {
-      border-bottom: none;
+    @keyframes clickFlash {
+      0%   { background-color: #36c736; }
+      100% { background-color: inherit; }
     }
-
-    /* Invalid move => brief red flash */
-    .grid-cell.invalid-move {
-      animation: flash-red 0.3s;
+    /* 0.3s red flash if invalid */
+    .invalid-move {
+      animation: flashRed 0.3s;
     }
-    @keyframes flash-red {
+    @keyframes flashRed {
       0%   { background-color: red; }
       100% { background-color: inherit; }
     }
 
-    /* ----------------- CIRCLE OVERLAY ----------------- */
+    /* circle mask over the 5×5 viewport */
     #circle-mask {
-        position: absolute;
-        top: -5px;
-        left: -5px;
-        width: calc(100% + 10px);
-        height: calc(100% + 10px);
-        pointer-events: none;
-        background: radial-gradient(
-            circle at 50% 50%,
-            rgba(47,47,47,0) 55%,
-            var(--bg-color) 60%,
-            var(--bg-color) 100%
-        );
+      position: absolute;
+      top: 0; 
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      background: radial-gradient(
+        circle at 50% 50%,
+        rgba(47,47,47,0) 55%,
+        var(--bg-color) 70%,
+        var(--bg-color) 100%
+      );
     }
 
-    /* ----------------- MINI-MAP PLACEHOLDER ----------------- */
+    /* MINI-MAP: circle w/ border, 10×10 sub-grid */
     #mini-map {
       position: absolute;
       bottom: 0;
       right: 0;
-      width: 80px;
-      height: 80px;
+      width: 104px; 
+      height: 104px;
       margin: 20px;
       border: 3px solid #888;
       border-radius: 50%;
-      background: #111; 
+      background: #111;
+      overflow: hidden;
+    }
+    #mini-map-grid {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-columns: repeat(10,1fr);
+      grid-template-rows: repeat(10,1fr);
+      gap: 1px;
+    }
+    .mini-map-cell {
+      background: var(--dark-grey);
+      width: 100%;
+      aspect-ratio: 1;
+      box-sizing: border-box;
+      border: none;
+    }
+    .mini-map-player {
+      outline: 2px solid var(--player-square-color);
+      outline-offset: -2px;
+    }
+
+    /* HOME ICON => half below circle, on top => z-index:2 */
+    #home-icon {
+      position: absolute;
+      bottom: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40px;
+      height: 40px;
+      cursor: pointer;
+      filter: brightness(0) invert(1);
+      z-index: 2; 
+    }
+
+    /* PROFILE ICON w/ black box background */
+    #profile-wrapper {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      margin: 20px;
+      background: rgba(0,0,0,0.8);
+      border-radius: 8px;
+      padding: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #profile-icon {
+      width: 50px;
+      height: 50px;
+      filter: brightness(0) invert(1);
+      cursor: pointer;
+    }
+
+    /* 3s directional fade keyframes (1.5+1.5) */
+    @keyframes anim-exit-up {
+      0%   { transform: scale(1);   opacity: 1; }
+      100% { transform: scale(1.2); opacity: 0; }
+    }
+    @keyframes anim-enter-up {
+      0%   { transform: scale(1.2); opacity: 0; }
+      100% { transform: scale(1);   opacity: 1; }
+    }
+    @keyframes anim-exit-down {
+      0%   { transform: scale(1);   opacity: 1; }
+      100% { transform: scale(0.8); opacity: 0; }
+    }
+    @keyframes anim-enter-down {
+      0%   { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1);   opacity: 1; }
+    }
+    @keyframes anim-exit-left {
+      0%   { transform: translateX(0); opacity:1; }
+      100% { transform: translateX(-100%); opacity:0; }
+    }
+    @keyframes anim-enter-left {
+      0%   { transform: translateX(100%); opacity:0; }
+      100% { transform: translateX(0);     opacity:1; }
+    }
+    @keyframes anim-exit-right {
+      0%   { transform: translateX(0); opacity:1; }
+      100% { transform: translateX(100%); opacity:0; }
+    }
+    @keyframes anim-enter-right {
+      0%   { transform: translateX(-100%); opacity:0; }
+      100% { transform: translateX(0);      opacity:1; }
     }
   </style>
 </head>
 <body>
-
   <div class="page-content">
     <!-- TOP IMAGE CONTAINER -->
     <div id="image-container">
       <div class="image-layer" id="image-layer-1"></div>
       <div class="image-layer" id="image-layer-2"></div>
-
-      <!-- Fade-out overlay that covers image & bottom border -->
+      <div id="black-overlay"></div>
       <div id="image-fade-out"></div>
 
-      <!-- 3 Icon Menu Overlay -->
+      <!-- 3 Icons Menu at bottom of image -->
       <div id="menu-container">
         <div class="icon-wrapper">
           <img src="./assets/icons/build.png" alt="icon1" class="menu-icon" />
@@ -229,156 +312,273 @@
     </div>
 
     <!-- TEXT FIELD -->
-    <div id="dynamic-text">you salvage copper from loose wires</div>
+    <div id="dynamic-text">You salvage copper from loose wires</div>
 
-    <!-- GRID CONTAINER -->
+    <!-- GRID CONTAINER + MINI-MAP + PROFILE ICON -->
     <div id="grid-container">
-      <div class="grid" id="grid"></div>
-      <!-- Circular gradient overlay -->
-      <div id="circle-mask"></div>
-      <!-- Mini-map placeholder -->
-      <div id="mini-map"></div>
+      <div class="viewport-wrapper">
+        <div id="viewport-grid"></div>
+        <div id="circle-mask"></div>
+      </div>
+
+      <!-- Mini-map circle with 10×10 inside, home icon on top -->
+      <div id="mini-map">
+        <div id="mini-map-grid"></div>
+        <img src="./assets/icons/home.png" alt="Home Icon" id="home-icon" />
+      </div>
+
+      <!-- Profile icon in a black box -->
+      <div id="profile-wrapper" class="icon-wrapper">
+        <img src="./assets/icons/profile.png" alt="Profile Icon" id="profile-icon" />
+      </div>
     </div>
   </div>
 
   <script>
     class GridGame {
       constructor() {
-        this.rows = 5;
-        this.cols = 5;
-        this.current = [0, 0]; // Starting position
-        this.dungeonMap = this.generateDungeon();
+        this.mapSize = 10;
+        this.viewSize = 5;
+        this.halfView = 2;
 
-        // For cross-fade image switching
-        this.currentLayer = 1;
+        // Create 10×10 data, each cell has { visited:false, type: random(1..16) }
+        this.mapData = [];
+        for(let r=0; r<this.mapSize; r++){
+          const row=[];
+          for(let c=0;c<this.mapSize;c++){
+            // For demonstration, pick a random environment index 1..16
+            const envIndex = Math.floor(Math.random()*16) + 1; 
+            row.push({
+              visited: false,
+              type: envIndex // an integer 1..16
+            });
+          }
+          this.mapData.push(row);
+        }
 
-        this.initGrid();
+        // Start player at (5,5), mark visited
+        this.player={ row:5, col:5 };
+        this.mapData[5][5].visited=true;
+
+        this.currentLayer=1;
+
         this.preloadImages();
         this.setInitialImage();
-      }
 
-      generateDungeon() {
-        const cellTypes = ['corridor','treasure','monster','boss','locked_door','empty'];
-        const map = [];
-        for (let i = 0; i < this.rows; i++) {
-          const row = [];
-          for (let j = 0; j < this.cols; j++) {
-            const rIndex = Math.floor(Math.random() * cellTypes.length);
-            row.push({ type: cellTypes[rIndex] });
-          }
-          map.push(row);
+        // Create 25 persistent 5×5 cells
+        this.viewportGridEl = document.getElementById('viewport-grid');
+        this.viewportCells = [];
+        for(let i=0;i<25;i++){
+          const cellDiv=document.createElement('div');
+          cellDiv.classList.add('viewport-cell');
+          cellDiv.addEventListener('click',()=>this.onCellClick(i));
+          this.viewportGridEl.appendChild(cellDiv);
+          this.viewportCells.push(cellDiv);
         }
-        // Make bottom-right guaranteed 'boss'
-        map[4][4] = { type: 'boss' };
-        return map;
+
+        // Create mini-map (10×10)
+        this.miniMapGridEl=document.getElementById('mini-map-grid');
+        this.miniMapCells=[];
+        for(let r=0;r<this.mapSize;r++){
+          for(let c=0;c<this.mapSize;c++){
+            const mmCell=document.createElement('div');
+            mmCell.classList.add('mini-map-cell');
+            this.miniMapGridEl.appendChild(mmCell);
+            this.miniMapCells.push(mmCell);
+          }
+        }
+
+        // Initial render
+        this.updateViewport(true);
+        this.updateMiniMap();
       }
 
+      /* Preload CRUX_ENV_1..CRUX_ENV_16 images if you want to cache them up front */
       preloadImages() {
-        const imageTypes = ['corridor','treasure','monster','boss','locked_door','empty'];
-        imageTypes.forEach(type => {
-          const img = new Image();
-          img.src = this.getImageUrl(type);
-        });
+        for(let i=1;i<=16;i++){
+          const img=new Image();
+          img.src=this.getImageUrl(i);
+        }
       }
 
-      getImageUrl(type) {
-        const imageMap = {
-          corridor: 'assets/corridor.jpg',
-          treasure: 'assets/treasure.jpg',
-          monster: 'assets/monster.jpg',
-          boss: 'assets/boss.jpg',
-          locked_door: 'assets/locked_door.jpg',
-          empty: 'assets/empty.jpg'
-        };
-        return `${imageMap[type]}?v=${Date.now()}`; // cache-buster
+      /* Return something like 'assets/new_images/CRUX_ENV_5.jpg' */
+      getImageUrl(envIndex) {
+        return `assets/new_images/CRUX_ENV_${envIndex}.jpg`;
       }
 
       setInitialImage() {
-        const cellType = this.dungeonMap[this.current[0]][this.current[1]].type;
-        const layer1 = document.getElementById('image-layer-1');
-        layer1.style.backgroundImage = `url('${this.getImageUrl(cellType)}')`;
-        layer1.classList.add('active');
+        const envIndex=this.mapData[this.player.row][this.player.col].type;
+        const layer1=document.getElementById('image-layer-1');
+        layer1.style.backgroundImage=`url('${this.getImageUrl(envIndex)}')`;
+        layer1.style.opacity=1;
       }
 
-      updateImage(newRow, newCol) {
-        const newLayer = this.currentLayer === 1 ? 2 : 1;
-        const currentLayerEl = document.getElementById(`image-layer-${this.currentLayer}`);
-        const nextLayerEl = document.getElementById(`image-layer-${newLayer}`);
-
-        const newCellType = this.dungeonMap[newRow][newCol].type;
-        nextLayerEl.style.backgroundImage = `url('${this.getImageUrl(newCellType)}')`;
-
-        // Cross-fade
-        currentLayerEl.classList.remove('active');
-        nextLayerEl.classList.add('active');
-        this.currentLayer = newLayer;
+      onCellClick(index){
+        const {r,c} = this.indexToGlobalRC(index);
+        this.attemptMove(r,c,index);
+      }
+      indexToGlobalRC(i){
+        const localR=Math.floor(i/5);
+        const localC=i%5;
+        let topRow=this.player.row-this.halfView;
+        let leftCol=this.player.col-this.halfView;
+        topRow=Math.max(0, Math.min(topRow,this.mapSize-this.viewSize));
+        leftCol=Math.max(0, Math.min(leftCol,this.mapSize-this.viewSize));
+        const globalR=topRow+localR;
+        const globalC=leftCol+localC;
+        return {r:globalR,c:globalC};
       }
 
-      initGrid() {
-        const gridEl = document.getElementById('grid');
-        gridEl.innerHTML = '';
+      attemptMove(r,c,index){
+        const rowDist=Math.abs(r-this.player.row);
+        const colDist=Math.abs(c-this.player.col);
+        if(rowDist+colDist!==1){
+          // invalid => red flash
+          this.viewportCells[index].classList.add('invalid-move');
+          setTimeout(()=>this.viewportCells[index].classList.remove('invalid-move'),300);
+          return;
+        }
+        // 0.5s highlight
+        this.viewportCells[index].classList.add('click-highlight');
+        setTimeout(()=>{
+          this.viewportCells[index].classList.remove('click-highlight');
+        },500);
 
-        for (let r = 0; r < this.rows; r++) {
-          for (let c = 0; c < this.cols; c++) {
-            const cell = document.createElement('div');
-            cell.classList.add('grid-cell');
-            cell.style.backgroundColor = this.getCellColor(r, c);
+        // old => visited
+        this.mapData[this.player.row][this.player.col].visited=true;
 
-            cell.addEventListener('click', () => {
-              this.attemptMove(r, c, cell);
-            });
+        // direction
+        let direction='up';
+        if(r>this.player.row) direction='down';
+        else if(r<this.player.row) direction='up';
+        else if(c>this.player.col) direction='right';
+        else if(c<this.player.col) direction='left';
 
-            gridEl.appendChild(cell);
+        // move
+        this.player.row=r;
+        this.player.col=c;
+        this.mapData[r][c].visited=true;
+
+        // fetch CRUX_ENV_x
+        const envIndex=this.mapData[r][c].type;
+        this.playTransition(direction, envIndex);
+
+        // re-render
+        this.updateViewport();
+        this.updateMiniMap();
+      }
+
+      /* 3-second directional fade => 1.5s old exit + black fade in, then 1.5s new enter + fade out */
+      playTransition(direction, envIndex){
+        const oldLayer=document.getElementById(`image-layer-${this.currentLayer}`);
+        const newLayerNum=(this.currentLayer===1)?2:1;
+        const newLayer=document.getElementById(`image-layer-${newLayerNum}`);
+        const blackOverlay=document.getElementById('black-overlay');
+
+        oldLayer.style.animation='';
+        newLayer.style.animation='';
+        oldLayer.style.opacity=1;
+        newLayer.style.opacity=0;
+        newLayer.style.backgroundImage=`url('${this.getImageUrl(envIndex)}')`;
+
+        let exitAnim='', enterAnim='';
+        switch(direction){
+          case 'up': exitAnim='anim-exit-up';   enterAnim='anim-enter-up';   break;
+          case 'down': exitAnim='anim-exit-down'; enterAnim='anim-enter-down'; break;
+          case 'left': exitAnim='anim-exit-left'; enterAnim='anim-enter-left'; break;
+          case 'right':exitAnim='anim-exit-right';enterAnim='anim-enter-right';break;
+        }
+
+        if(exitAnim){
+          oldLayer.style.animation=`${exitAnim} 1.5s forwards ease`;
+        } else {
+          oldLayer.style.transition='opacity 1.5s';
+          oldLayer.style.opacity=0;
+        }
+        blackOverlay.style.animation='overlay-fade-in 1.5s forwards ease';
+
+        setTimeout(()=>{
+          oldLayer.style.opacity=0;
+          oldLayer.style.animation='';
+          this.currentLayer=newLayerNum;
+
+          if(enterAnim){
+            newLayer.style.animation=`${enterAnim} 1.5s forwards ease`;
+          } else {
+            newLayer.style.transition='opacity 1.5s';
+            newLayer.style.opacity=1;
+          }
+          blackOverlay.style.animation='overlay-fade-out 1.5s forwards ease';
+        },1500);
+      }
+
+      updateViewport(initial=false){
+        let topRow=this.player.row-this.halfView;
+        let leftCol=this.player.col-this.halfView;
+        topRow=Math.max(0,Math.min(topRow,this.mapSize-this.viewSize));
+        leftCol=Math.max(0,Math.min(leftCol,this.mapSize-this.viewSize));
+
+        // update color on 25 cells
+        for(let i=0;i<25;i++){
+          const cellDiv=this.viewportCells[i];
+          const localR=Math.floor(i/5);
+          const localC=i%5;
+          const globalR=topRow+localR;
+          const globalC=leftCol+localC;
+          cellDiv.style.backgroundColor=this.getCellColor(globalR,globalC);
+        }
+
+        // SHIFT camera => 1.5s
+        const localPR=this.player.row-topRow;
+        const localPC=this.player.col-leftCol;
+        const offsetX=(2-localPC)*80;
+        const offsetY=(2-localPR)*80;
+
+        if(initial){
+          this.viewportGridEl.style.transition='none';
+          this.viewportGridEl.style.transform=`translate(${offsetX}px,${offsetY}px)`;
+          setTimeout(()=>{
+            this.viewportGridEl.style.transition='transform 1.5s ease';
+          },50);
+        } else {
+          this.viewportGridEl.style.transform=`translate(${offsetX}px,${offsetY}px)`;
+        }
+      }
+
+      updateMiniMap(){
+        for(let r=0;r<this.mapSize;r++){
+          for(let c=0;c<this.mapSize;c++){
+            const idx=r*10+c;
+            const mmCell=this.miniMapCells[idx];
+            const visited=this.mapData[r][c].visited;
+            mmCell.style.background= visited?'var(--whiteish)':'var(--dark-grey)';
+            mmCell.classList.remove('mini-map-player');
+            if(r===this.player.row && c===this.player.col){
+              mmCell.classList.add('mini-map-player');
+            }
           }
         }
       }
 
-      attemptMove(row, col, cellEl) {
-        const rowDist = Math.abs(row - this.current[0]);
-        const colDist = Math.abs(col - this.current[1]);
-
-        // Valid if exactly 1 step up/down/left/right
-        if ((rowDist === 1 && colDist === 0) || (rowDist === 0 && colDist === 1)) {
-          this.current = [row, col];
-          this.updateImage(row, col);
-          this.initGrid();
-        } else {
-          // Invalid => flash the cell red
-          cellEl.classList.add('invalid-move');
-          setTimeout(() => {
-            cellEl.classList.remove('invalid-move');
-          }, 300);
+      getCellColor(r,c){
+        if(r<0||r>=this.mapSize||c<0||c>=this.mapSize){
+          return 'black';
         }
-      }
-
-      getCellColor(r, c) {
-        const currentR = this.current[0];
-        const currentC = this.current[1];
-        const rowDist = Math.abs(r - currentR);
-        const colDist = Math.abs(c - currentC);
-
-        // Current square => bright green
-        if (rowDist === 0 && colDist === 0) {
+        if(r===this.player.row && c===this.player.col){
           return 'var(--player-square-color)';
         }
-        // Valid moves => slightly darker green
-        if ((rowDist === 1 && colDist === 0) || (rowDist === 0 && colDist === 1)) {
-          return 'var(--adjacent-square-color)';
+        const visited=this.mapData[r][c].visited;
+        const rowDist=Math.abs(r-this.player.row);
+        const colDist=Math.abs(c-this.player.col);
+        const isAdjacent=(rowDist+colDist===1);
+        if(!visited){
+          return isAdjacent?'var(--greyish-green)':'var(--dark-grey)';
+        } else {
+          return isAdjacent?'var(--whiteish-green)':'var(--whiteish)';
         }
-        // Diagonal or 2-away => light gray
-        if (
-          (rowDist === 1 && colDist === 1) ||
-          (rowDist === 2 && colDist === 0) ||
-          (rowDist === 0 && colDist === 2)
-        ) {
-          return 'var(--diag-square-color)';
-        }
-        // Everything else => dark gray
-        return 'var(--other-square-color)';
       }
     }
 
-    // Instantiate game
     new GridGame();
   </script>
 </body>
