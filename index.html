@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Dungeon Scroll - 16 Unique CRUX_ENV Images</title>
+  <title>Swipe Adventure</title>
   <style>
     :root {
       --bg-color: #2f2f2f;
@@ -16,7 +16,7 @@
     }
 
     body {
-      margin: 0; 
+      margin: 0;
       padding: 0;
       background: var(--bg-color);
       color: #fff;
@@ -56,8 +56,8 @@
       background-size: cover;
       background-position: center;
       opacity: 0;
+      transition: opacity 0.5s; /* base transition */
     }
-    /* 3s directional fade (1.5 + 1.5) */
     #black-overlay {
       position: absolute;
       top: 0; 
@@ -69,7 +69,6 @@
       pointer-events: none;
       z-index: 999;
     }
-    /* optional bottom fade-out gradient */
     #image-fade-out {
       position: absolute;
       z-index: 10;
@@ -78,11 +77,7 @@
       width: 100%;
       height: 40%;
       pointer-events: none;
-      background: linear-gradient(
-        to bottom,
-        rgba(47,47,47,0) 0%,
-        var(--bg-color) 100%
-      );
+      background: linear-gradient(to bottom, rgba(47,47,47,0) 0%, var(--bg-color) 100%);
     }
 
     /* 3 ICONS MENU AT BOTTOM OF TOP IMAGE */
@@ -101,11 +96,11 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      cursor: pointer;
     }
     .menu-icon {
-      width: 50px; 
+      width: 50px;
       height: 50px;
-      cursor: pointer;
       filter: brightness(0) invert(1);
     }
 
@@ -114,6 +109,7 @@
       margin: 15px 0;
       text-align: center;
       font-size: 1.2em;
+      min-height: 1.5em; /* ensure space even if empty */
     }
 
     /* MAIN GRID CONTAINER */
@@ -133,8 +129,9 @@
     }
     #viewport-grid {
       position: absolute;
-      top: 0; left: 0;
-      width: 400px; 
+      top: 0; 
+      left: 0;
+      width: 400px;
       height: 400px;
       display: grid;
       grid-template-columns: repeat(5, 80px);
@@ -146,7 +143,6 @@
       width: 80px;
       height: 80px;
       border: 1px solid #222;
-      /* fade color changes */
       transition: background-color 1s; 
       display: flex;
       align-items: center;
@@ -154,7 +150,7 @@
       user-select: none;
       position: relative;
     }
-    /* 0.5s highlight on valid click */
+    /* highlight on valid click */
     .click-highlight {
       animation: clickFlash 0.5s forwards;
     }
@@ -162,7 +158,7 @@
       0%   { background-color: #36c736; }
       100% { background-color: inherit; }
     }
-    /* 0.3s red flash if invalid */
+    /* red flash if invalid */
     .invalid-move {
       animation: flashRed 0.3s;
     }
@@ -179,12 +175,7 @@
       width: 100%;
       height: 100%;
       pointer-events: none;
-      background: radial-gradient(
-        circle at 50% 50%,
-        rgba(47,47,47,0) 55%,
-        var(--bg-color) 70%,
-        var(--bg-color) 100%
-      );
+      background: radial-gradient(circle at 50% 50%, rgba(47,47,47,0) 55%, var(--bg-color) 70%, var(--bg-color) 100%);
     }
 
     /* MINI-MAP: circle w/ border, 10×10 sub-grid */
@@ -228,9 +219,9 @@
       transform: translateX(-50%);
       width: 40px;
       height: 40px;
-      cursor: pointer;
       filter: brightness(0) invert(1);
-      z-index: 2; 
+      z-index: 2;
+      cursor: pointer;
     }
 
     /* PROFILE ICON w/ black box background */
@@ -253,7 +244,7 @@
       cursor: pointer;
     }
 
-    /* 3s directional fade keyframes (1.5+1.5) */
+    /* 3s directional fade keyframes (1.5 + 1.5) */
     @keyframes anim-exit-up {
       0%   { transform: scale(1);   opacity: 1; }
       100% { transform: scale(1.2); opacity: 0; }
@@ -271,7 +262,7 @@
       100% { transform: scale(1);   opacity: 1; }
     }
     @keyframes anim-exit-left {
-      0%   { transform: translateX(0); opacity:1; }
+      0%   { transform: translateX(0);   opacity:1; }
       100% { transform: translateX(-100%); opacity:0; }
     }
     @keyframes anim-enter-left {
@@ -279,12 +270,104 @@
       100% { transform: translateX(0);     opacity:1; }
     }
     @keyframes anim-exit-right {
-      0%   { transform: translateX(0); opacity:1; }
+      0%   { transform: translateX(0);   opacity:1; }
       100% { transform: translateX(100%); opacity:0; }
     }
     @keyframes anim-enter-right {
       0%   { transform: translateX(-100%); opacity:0; }
-      100% { transform: translateX(0);      opacity:1; }
+      100% { transform: translateX(0);     opacity:1; }
+    }
+
+    /* ====== MODAL OVERLAY for Profile ====== */
+    #profile-modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7); /* greys out background */
+      display: none;              /* hidden by default */
+      align-items: center;        /* center content vertically */
+      justify-content: center;    /* center horizontally */
+      z-index: 9999;             /* above everything else */
+    }
+    .profile-content {
+      width: 80%;
+      max-width: 500px;
+      background: #2a2a2a;
+      border-radius: 8px;
+      padding: 20px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .profile-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .profile-header h2 {
+      margin: 0;
+      font-size: 1.2em;
+    }
+    .close-profile {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 1.2em;
+      cursor: pointer;
+    }
+    /* Tab Buttons */
+    .profile-tabs {
+      display: flex;
+      gap: 10px;
+    }
+    .profile-tab {
+      background: #444;
+      border: none;
+      color: #fff;
+      padding: 8px 12px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .profile-tab.active {
+      background: #666;
+    }
+    /* Tab Content Container */
+    .profile-body {
+      background: #1f1f1f;
+      border-radius: 4px;
+      padding: 10px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .profile-tab-content {
+      display: none;
+      flex: 1;
+    }
+    .profile-tab-content.active {
+      display: block;
+    }
+    /* 'Your Team' styling */
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 60px);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .team-cell {
+      width: 60px; 
+      height: 60px;
+      background: #333;
+      border: 1px solid #555;
+      border-radius: 4px;
+    }
+    /* Items listing */
+    .items-list {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
     }
   </style>
 </head>
@@ -299,20 +382,20 @@
 
       <!-- 3 Icons Menu at bottom of image -->
       <div id="menu-container">
-        <div class="icon-wrapper">
-          <img src="./assets/icons/build.png" alt="icon1" class="menu-icon" />
+        <div class="icon-wrapper" id="build-btn">
+          <img src="./assets/icons/build.png" alt="Build" class="menu-icon" />
         </div>
-        <div class="icon-wrapper">
-          <img src="./assets/icons/view.png" alt="icon2" class="menu-icon" />
+        <div class="icon-wrapper" id="view-btn">
+          <img src="./assets/icons/view.png" alt="View" class="menu-icon" />
         </div>
-        <div class="icon-wrapper">
-          <img src="./assets/icons/gather.png" alt="icon3" class="menu-icon" />
+        <div class="icon-wrapper" id="gather-btn">
+          <img src="./assets/icons/gather.png" alt="Gather" class="menu-icon" />
         </div>
       </div>
     </div>
 
     <!-- TEXT FIELD -->
-    <div id="dynamic-text">You salvage copper from loose wires</div>
+    <div id="dynamic-text"></div>
 
     <!-- GRID CONTAINER + MINI-MAP + PROFILE ICON -->
     <div id="grid-container">
@@ -321,51 +404,170 @@
         <div id="circle-mask"></div>
       </div>
 
-      <!-- Mini-map circle with 10×10 inside, home icon on top -->
       <div id="mini-map">
         <div id="mini-map-grid"></div>
         <img src="./assets/icons/home.png" alt="Home Icon" id="home-icon" />
       </div>
 
-      <!-- Profile icon in a black box -->
       <div id="profile-wrapper" class="icon-wrapper">
         <img src="./assets/icons/profile.png" alt="Profile Icon" id="profile-icon" />
       </div>
     </div>
   </div>
 
+  <!-- PROFILE MODAL (hidden by default) -->
+  <div id="profile-modal">
+    <div class="profile-content">
+      <div class="profile-header">
+        <h2>Profile</h2>
+        <button class="close-profile" id="close-profile-btn">X</button>
+      </div>
+      <!-- Tabs -->
+      <div class="profile-tabs">
+        <button class="profile-tab" data-tab="team">Your Team</button>
+        <button class="profile-tab" data-tab="items">Your Items</button>
+      </div>
+      <!-- Body -->
+      <div class="profile-body">
+        <!-- Team Tab -->
+        <div class="profile-tab-content" data-tab="team">
+          <div class="team-grid">
+            <div class="team-cell"></div>
+            <div class="team-cell"></div>
+            <div class="team-cell"></div>
+            <div class="team-cell"></div>
+          </div>
+          <p>Click a cell above to see more info about that member (coming soon).</p>
+        </div>
+        <!-- Items Tab -->
+        <div class="profile-tab-content" data-tab="items">
+          <p>Below is a list of the items you carry:</p>
+          <div class="items-list" id="items-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
+    /* Weighted categories => 80% open_wasteland, 5% each for others. */
+    const categories = [
+      {
+        name: "open_wasteland",
+        weight: 80,
+        images: [1,9,10,11,12,13,14,15,16]
+      },
+      {
+        name: "inside_building",
+        weight: 5,
+        images: [2]
+      },
+      {
+        name: "underpass",
+        weight: 5,
+        images: [3]
+      },
+      {
+        name: "mech",
+        weight: 5,
+        images: [4,5]
+      },
+      {
+        name: "in_city",
+        weight: 5,
+        images: [6,7,8]
+      }
+    ];
+    function weightedRandomCategory(catList) {
+      const total = catList.reduce((sum, cat) => sum + cat.weight, 0);
+      let rand = Math.random() * total;
+      for (const cat of catList) {
+        if (rand < cat.weight) return cat;
+        rand -= cat.weight;
+      }
+      return catList[catList.length-1];
+    }
+    function pickImageIndex(cat) {
+      const arr=cat.images;
+      return arr[Math.floor(Math.random()*arr.length)];
+    }
+
+    /* environment config => gatherLoot, buildAllowed, viewFlavor */
+    const envConfig = {
+      open_wasteland: {
+        gatherLoot: { stone:0.4, wood:0.2, scrap_metal:0.4 },
+        buildAllowed: false,
+        viewFlavor: [
+          "A vast dusty plain stretches in every direction.",
+          "You see swirling sands and the remains of a cracked highway."
+        ],
+      },
+      inside_building: {
+        gatherLoot: { cloth:0.6, electronics:0.3, special_key:0.1 },
+        buildAllowed: true,
+        viewFlavor: [
+          "Crumbled walls, scattered furniture. Eerie silence within.",
+          "Broken glass litters the floor, shafts of light from holes in the ceiling."
+        ],
+      },
+      underpass: {
+        gatherLoot: { stone:0.2, wood:0.1, special_fungus:0.7 },
+        buildAllowed: false,
+        viewFlavor: [
+          "A damp, echoing tunnel. Water drips from cracks overhead.",
+          "Darkness envelops the long, deserted underpass."
+        ],
+      },
+      mech: {
+        gatherLoot: { tech_parts:0.5, scrap_metal:0.4, rare_alloy:0.1 },
+        buildAllowed: true,
+        viewFlavor: [
+          "A hulking mechanical frame stands here, cables trailing from it.",
+          "Metal debris and half-disassembled servos scatter the ground."
+        ],
+      },
+      in_city: {
+        gatherLoot: { wood:0.2, cloth:0.2, electronics:0.3, currency:0.3 },
+        buildAllowed: false,
+        viewFlavor: [
+          "Crumbling skyscrapers loom overhead, windows shattered.",
+          "A faint breeze carries the smell of burnt plastic and old steel."
+        ],
+      }
+    };
+
     class GridGame {
       constructor() {
         this.mapSize = 10;
         this.viewSize = 5;
         this.halfView = 2;
 
-        // Create 10×10 data, each cell has { visited:false, type: random(1..16) }
+        // Weighted assignment of categories + random CRUX_ENV image
         this.mapData = [];
         for(let r=0; r<this.mapSize; r++){
-          const row=[];
-          for(let c=0;c<this.mapSize;c++){
-            // For demonstration, pick a random environment index 1..16
-            const envIndex = Math.floor(Math.random()*16) + 1; 
+          const row = [];
+          for(let c=0; c<this.mapSize; c++){
+            const cat = weightedRandomCategory(categories);
+            const envIdx = pickImageIndex(cat);
             row.push({
               visited: false,
-              type: envIndex // an integer 1..16
+              categoryName: cat.name,
+              envIndex: envIdx
             });
           }
           this.mapData.push(row);
         }
 
-        // Start player at (5,5), mark visited
-        this.player={ row:5, col:5 };
-        this.mapData[5][5].visited=true;
+        // Player starts at (5,5)
+        this.player = { row:5, col:5 };
+        this.mapData[5][5].visited = true;
 
-        this.currentLayer=1;
+        this.currentLayer = 1;
+        this.inventory = {}; // e.g. { stone:2, wood:1 }
 
         this.preloadImages();
         this.setInitialImage();
 
-        // Create 25 persistent 5×5 cells
+        // create DOM-based 5x5
         this.viewportGridEl = document.getElementById('viewport-grid');
         this.viewportCells = [];
         for(let i=0;i<25;i++){
@@ -376,9 +578,9 @@
           this.viewportCells.push(cellDiv);
         }
 
-        // Create mini-map (10×10)
-        this.miniMapGridEl=document.getElementById('mini-map-grid');
-        this.miniMapCells=[];
+        // create mini-map
+        this.miniMapGridEl = document.getElementById('mini-map-grid');
+        this.miniMapCells = [];
         for(let r=0;r<this.mapSize;r++){
           for(let c=0;c<this.mapSize;c++){
             const mmCell=document.createElement('div');
@@ -388,88 +590,136 @@
           }
         }
 
-        // Initial render
+        this.dynamicTextEl = document.getElementById('dynamic-text');
+
+        // set up action icons
+        this.setupIcons();
+
+        // set up profile modal
+        this.setupProfileModal();
+
+        // initial render
         this.updateViewport(true);
         this.updateMiniMap();
       }
 
-      /* Preload CRUX_ENV_1..CRUX_ENV_16 images if you want to cache them up front */
-      preloadImages() {
+      preloadImages(){
         for(let i=1;i<=16;i++){
           const img=new Image();
           img.src=this.getImageUrl(i);
         }
       }
-
-      /* Return something like 'assets/new_images/CRUX_ENV_5.jpg' */
-      getImageUrl(envIndex) {
+      getImageUrl(envIndex){
         return `assets/new_images/CRUX_ENV_${envIndex}.jpg`;
       }
-
-      setInitialImage() {
-        const envIndex=this.mapData[this.player.row][this.player.col].type;
+      setInitialImage(){
+        const cell = this.mapData[this.player.row][this.player.col];
         const layer1=document.getElementById('image-layer-1');
-        layer1.style.backgroundImage=`url('${this.getImageUrl(envIndex)}')`;
+        layer1.style.backgroundImage=`url('${this.getImageUrl(cell.envIndex)}')`;
         layer1.style.opacity=1;
       }
 
-      onCellClick(index){
-        const {r,c} = this.indexToGlobalRC(index);
-        this.attemptMove(r,c,index);
+      setupIcons(){
+        const buildBtn=document.getElementById('build-btn');
+        const viewBtn=document.getElementById('view-btn');
+        const gatherBtn=document.getElementById('gather-btn');
+        buildBtn.addEventListener('click',()=>this.handleBuild());
+        viewBtn.addEventListener('click',()=>this.handleView());
+        gatherBtn.addEventListener('click',()=>this.handleGather());
+      }
+
+      handleBuild(){
+        const cell = this.mapData[this.player.row][this.player.col];
+        const config = envConfig[cell.categoryName]||{};
+        if(!config.buildAllowed){
+          this.updateDynamicText("You can't build here...");
+          return;
+        }
+        this.updateDynamicText(`You build a small fort in the ${cell.categoryName}!`);
+      }
+      handleView(){
+        const cell=this.mapData[this.player.row][this.player.col];
+        const config=envConfig[cell.categoryName]||{};
+        const flavor=config.viewFlavor||["Nothing special to see."];
+        const randIndex=Math.floor(Math.random()*flavor.length);
+        let msg=flavor[randIndex];
+        // chance for fight or recruit
+        const roll=Math.random();
+        if(roll<0.05){
+          msg+=" Suddenly, a hostile group appears, ready to fight!";
+        } else if(roll<0.10){
+          msg+=" A wandering survivor appears and joins your group!";
+        }
+        this.updateDynamicText(msg);
+      }
+      handleGather(){
+        const cell=this.mapData[this.player.row][this.player.col];
+        const config=envConfig[cell.categoryName]||{};
+        const lootTable=config.gatherLoot||{};
+        if(!Object.keys(lootTable).length){
+          this.updateDynamicText("There's nothing to gather here...");
+          return;
+        }
+        let foundItems=[];
+        for(const [itemName,prob] of Object.entries(lootTable)){
+          if(Math.random()<prob){
+            foundItems.push(itemName);
+            if(!this.inventory[itemName]) this.inventory[itemName]=0;
+            this.inventory[itemName]++;
+          }
+        }
+        if(foundItems.length===0){
+          this.updateDynamicText("You gather... nothing this time.");
+        } else {
+          const itemStr=foundItems.join(", ");
+          this.updateDynamicText(`You gather: ${itemStr}!`);
+        }
+      }
+
+      onCellClick(i){
+        const {r,c}=this.indexToGlobalRC(i);
+        this.attemptMove(r,c,i);
       }
       indexToGlobalRC(i){
         const localR=Math.floor(i/5);
         const localC=i%5;
         let topRow=this.player.row-this.halfView;
         let leftCol=this.player.col-this.halfView;
-        topRow=Math.max(0, Math.min(topRow,this.mapSize-this.viewSize));
-        leftCol=Math.max(0, Math.min(leftCol,this.mapSize-this.viewSize));
-        const globalR=topRow+localR;
-        const globalC=leftCol+localC;
-        return {r:globalR,c:globalC};
+        topRow=Math.max(0,Math.min(topRow,this.mapSize-this.viewSize));
+        leftCol=Math.max(0,Math.min(leftCol,this.mapSize-this.viewSize));
+        return {r:topRow+localR,c:leftCol+localC};
       }
-
       attemptMove(r,c,index){
         const rowDist=Math.abs(r-this.player.row);
         const colDist=Math.abs(c-this.player.col);
         if(rowDist+colDist!==1){
-          // invalid => red flash
-          this.viewportCells[index].classList.add('invalid-move');
-          setTimeout(()=>this.viewportCells[index].classList.remove('invalid-move'),300);
+          const cellDiv=this.viewportCells[index];
+          cellDiv.classList.add('invalid-move');
+          setTimeout(()=>cellDiv.classList.remove('invalid-move'),300);
           return;
         }
-        // 0.5s highlight
-        this.viewportCells[index].classList.add('click-highlight');
-        setTimeout(()=>{
-          this.viewportCells[index].classList.remove('click-highlight');
-        },500);
+        const cellDiv=this.viewportCells[index];
+        cellDiv.classList.add('click-highlight');
+        setTimeout(()=>cellDiv.classList.remove('click-highlight'),500);
 
-        // old => visited
         this.mapData[this.player.row][this.player.col].visited=true;
 
-        // direction
         let direction='up';
         if(r>this.player.row) direction='down';
         else if(r<this.player.row) direction='up';
         else if(c>this.player.col) direction='right';
         else if(c<this.player.col) direction='left';
 
-        // move
         this.player.row=r;
         this.player.col=c;
         this.mapData[r][c].visited=true;
 
-        // fetch CRUX_ENV_x
-        const envIndex=this.mapData[r][c].type;
-        this.playTransition(direction, envIndex);
+        this.playTransition(direction, this.mapData[r][c].envIndex);
 
-        // re-render
         this.updateViewport();
         this.updateMiniMap();
       }
-
-      /* 3-second directional fade => 1.5s old exit + black fade in, then 1.5s new enter + fade out */
-      playTransition(direction, envIndex){
+      playTransition(direction,envIndex){
         const oldLayer=document.getElementById(`image-layer-${this.currentLayer}`);
         const newLayerNum=(this.currentLayer===1)?2:1;
         const newLayer=document.getElementById(`image-layer-${newLayerNum}`);
@@ -481,7 +731,7 @@
         newLayer.style.opacity=0;
         newLayer.style.backgroundImage=`url('${this.getImageUrl(envIndex)}')`;
 
-        let exitAnim='', enterAnim='';
+        let exitAnim='',enterAnim='';
         switch(direction){
           case 'up': exitAnim='anim-exit-up';   enterAnim='anim-enter-up';   break;
           case 'down': exitAnim='anim-exit-down'; enterAnim='anim-enter-down'; break;
@@ -511,14 +761,12 @@
           blackOverlay.style.animation='overlay-fade-out 1.5s forwards ease';
         },1500);
       }
-
       updateViewport(initial=false){
         let topRow=this.player.row-this.halfView;
         let leftCol=this.player.col-this.halfView;
         topRow=Math.max(0,Math.min(topRow,this.mapSize-this.viewSize));
         leftCol=Math.max(0,Math.min(leftCol,this.mapSize-this.viewSize));
 
-        // update color on 25 cells
         for(let i=0;i<25;i++){
           const cellDiv=this.viewportCells[i];
           const localR=Math.floor(i/5);
@@ -528,7 +776,6 @@
           cellDiv.style.backgroundColor=this.getCellColor(globalR,globalC);
         }
 
-        // SHIFT camera => 1.5s
         const localPR=this.player.row-topRow;
         const localPC=this.player.col-leftCol;
         const offsetX=(2-localPC)*80;
@@ -544,7 +791,6 @@
           this.viewportGridEl.style.transform=`translate(${offsetX}px,${offsetY}px)`;
         }
       }
-
       updateMiniMap(){
         for(let r=0;r<this.mapSize;r++){
           for(let c=0;c<this.mapSize;c++){
@@ -559,7 +805,6 @@
           }
         }
       }
-
       getCellColor(r,c){
         if(r<0||r>=this.mapSize||c<0||c>=this.mapSize){
           return 'black';
@@ -575,6 +820,72 @@
           return isAdjacent?'var(--greyish-green)':'var(--dark-grey)';
         } else {
           return isAdjacent?'var(--whiteish-green)':'var(--whiteish)';
+        }
+      }
+
+      updateDynamicText(msg){
+        if(!this.dynamicTextEl) return;
+        this.dynamicTextEl.textContent=msg;
+        if(this._clearTextTimeout) clearTimeout(this._clearTextTimeout);
+        this._clearTextTimeout=setTimeout(()=>{
+          this.dynamicTextEl.textContent="";
+        },5000);
+      }
+
+      /************************************************
+       * Profile Modal Setup
+       ************************************************/
+      setupProfileModal(){
+        this.profileModal=document.getElementById('profile-modal');
+        this.profileIcon=document.getElementById('profile-icon');
+        this.closeProfileBtn=document.getElementById('close-profile-btn');
+
+        this.tabButtons=document.querySelectorAll('.profile-tab');
+        this.tabContents=document.querySelectorAll('.profile-tab-content');
+        this.itemsListEl=document.getElementById('items-list');
+
+        // open modal on profile icon click
+        this.profileIcon.addEventListener('click',()=>{
+          this.openProfileModal();
+        });
+        // close on X
+        this.closeProfileBtn.addEventListener('click',()=>{
+          this.closeProfileModal();
+        });
+
+        // tab switching
+        this.tabButtons.forEach(btn=>{
+          btn.addEventListener('click',()=>{
+            this.switchProfileTab(btn.dataset.tab);
+          });
+        });
+      }
+      openProfileModal(){
+        // update items list
+        this.renderInventoryItems();
+        // default tab => team
+        this.switchProfileTab('team');
+        // show modal
+        this.profileModal.style.display='flex';
+      }
+      closeProfileModal(){
+        this.profileModal.style.display='none';
+      }
+      switchProfileTab(tabName){
+        this.tabButtons.forEach(b=>b.classList.remove('active'));
+        this.tabContents.forEach(c=>c.classList.remove('active'));
+
+        const btn=document.querySelector(`.profile-tab[data-tab="${tabName}"]`);
+        const content=document.querySelector(`.profile-tab-content[data-tab="${tabName}"]`);
+        if(btn) btn.classList.add('active');
+        if(content) content.classList.add('active');
+      }
+      renderInventoryItems(){
+        this.itemsListEl.innerHTML='';
+        for(const [item,qty] of Object.entries(this.inventory)){
+          const p=document.createElement('p');
+          p.textContent=`${item}: ${qty}`;
+          this.itemsListEl.appendChild(p);
         }
       }
     }
